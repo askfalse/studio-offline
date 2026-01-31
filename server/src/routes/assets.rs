@@ -15,10 +15,14 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
+use urlencoding::decode;
 
 #[derive(Deserialize)]
+#[allow(non_snake_case)]
 struct AssetQuery {
     id: String,
+    #[serde(default)]
+    contentRepresentationPriorityList: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -114,8 +118,18 @@ async fn handle_assets_batch(
                                                 tracing::info!("Grabbed asset: {}", asset_id);
                                             }
                                         }
+                                        let filename = if let Some(ref crs) =
+                                            entry.contentRepresentationSpecifier
+                                        {
+                                            let crs_str = crs.to_string();
+                                            let hash =
+                                                format!("{:x}", md5::compute(crs_str.as_bytes()));
+                                            format!("{}-{}", asset_id, hash)
+                                        } else {
+                                            asset_id.to_string()
+                                        };
                                         entry.location =
-                                            format!("http://127.0.0.1/ddl/{asset_id}").into();
+                                            format!("http://127.0.0.1/ddl/{}", filename).into();
                                     }
                                 }
                             }
@@ -208,7 +222,13 @@ async fn handle_asset_by_query(
     Query(query): Query<AssetQuery>,
     req: Request,
 ) -> Response {
-    serve_asset_logic(state, query.id, req).await
+    serve_asset_logic(
+        state,
+        query.id,
+        query.contentRepresentationPriorityList,
+        req,
+    )
+    .await
 }
 
 async fn handle_asset_by_path(
@@ -216,11 +236,27 @@ async fn handle_asset_by_path(
     Path(id): Path<String>,
     req: Request,
 ) -> Response {
-    serve_asset_logic(state, id, req).await
+    serve_asset_logic(state, id, None, req).await
 }
 
-async fn serve_asset_logic(state: Arc<AppState>, id: String, req: Request) -> Response {
+async fn serve_asset_logic(
+    state: Arc<AppState>,
+    id: String,
+    crpl: Option<String>,
+    req: Request,
+) -> Response {
     let mode = &state.mode;
+
+    let filename = if let Some(crpl_val) = crpl {
+        if let Ok(decoded) = decode(&crpl_val) {
+            let hash = format!("{:x}", md5::compute(decoded.as_bytes()));
+            format!("{}-{}", id, hash)
+        } else {
+            id.clone()
+        }
+    } else {
+        id.clone()
+    };
 
     if mode == "Reflection Mode" {
         return Redirect::temporary(&format!(
@@ -228,12 +264,22 @@ async fn serve_asset_logic(state: Arc<AppState>, id: String, req: Request) -> Re
         )).into_response();
     }
 
-    let file_path = PathBuf::from("static/assets").join(&id);
+    let file_path = PathBuf::from("static/assets").join(&filename);
 
     if mode == "Asset Grab Mode" {
-        let url = format!(
-            "https://assetdelivery.roblox.com/v1/asset/?id={id}&permissionContext=ignoreUniverse&xcachesplit=0"
-        );
+        let url = if let Some(crpl_val) = req.uri().query().and_then(|q| {
+            q.split('&')
+                .find(|p| p.starts_with("contentRepresentationPriorityList="))
+                .map(|p| p.to_string())
+        }) {
+            format!(
+                "https://assetdelivery.roblox.com/v1/asset/?id={id}&{crpl_val}&permissionContext=ignoreUniverse&xcachesplit=0"
+            )
+        } else {
+            format!(
+                "https://assetdelivery.roblox.com/v1/asset/?id={id}&permissionContext=ignoreUniverse&xcachesplit=0"
+            )
+        };
 
         let cookie_path = PathBuf::from("cookie.txt");
         if let Ok(cookie_content) = tokio::fs::read_to_string(cookie_path).await {

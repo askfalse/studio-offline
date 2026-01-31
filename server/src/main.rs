@@ -58,6 +58,7 @@ async fn main() {
             routes::client_settings::routes(),
         )
         .nest("/oauth", routes::oauth::routes())
+        .nest("/assets", routes::upload::routes())
         .merge(routes::assets::routes())
         .merge(routes::static_handlers::routes())
         .merge(routes::telemetry::routes())
