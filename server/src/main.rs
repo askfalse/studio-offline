@@ -28,7 +28,7 @@ async fn main() {
     }
 
     let app_state = Arc::new(AppState {
-        mode: "Reflection Mode",
+        mode: "Reflection Mode".to_string(),
     });
 
     let app = Router::new()
