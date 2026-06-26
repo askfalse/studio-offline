@@ -20,25 +20,6 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let modes = vec!["Asset Grab Mode", "Regular Mode", "Reflection Mode"];
-    let mode = Select::new("How do you want to start Studio-Offline?", modes)
-        .prompt()
-        .unwrap_or("No mode selected");
-
-    if mode == "No mode selected" {
-        println!("No mode selected, exiting...");
-        return;
-    }
-
-    if mode == "Asset Grab Mode" && !std::path::Path::new("cookie.txt").exists() {
-        tracing::error!("cookie.txt not found in the root directory.");
-        tracing::error!(
-            "This file is REQUIRED for Asset Grab Mode due to recent changes in Roblox's assetdelivery APIs."
-        );
-        tracing::error!("Please create a cookie.txt containing your .ROBLOSECURITY cookie.");
-        return;
-    }
-
     if !Path::new("./static").exists() {
         tracing::error!(
             "Static directory (required) not found in directory. Please reinstall Studio-Offline."
@@ -46,10 +27,8 @@ async fn main() {
         return;
     }
 
-    println!("Webserver is running on mode: {mode}");
-
     let app_state = Arc::new(AppState {
-        mode: mode.to_string(),
+        mode: "Reflection Mode",
     });
 
     let app = Router::new()
