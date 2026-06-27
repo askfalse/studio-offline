@@ -44,7 +44,7 @@ async fn main() {
         .merge(routes::universal_app_config::routes())
         .with_state(app_state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 80));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8081));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     tracing::info!("listening on {}", addr);
     axum::serve(listener, app).await.unwrap();
