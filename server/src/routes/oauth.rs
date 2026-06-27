@@ -95,7 +95,7 @@ async fn generate_token() -> impl IntoResponse {
         "preferred_username": "Roblox",
         "created_at": epoch_time_now,
         "profile": "https://www.roblox.com/users/1/profile",
-        "picture":"http://localhost/headshot",
+        "picture":"http://localhost:8081/headshot",
         "id": jti,
         "nonce":"id-roblox","jti":jti,"nbf":epoch_time_now,"exp":epoch_time_now,"iat":epoch_time_now,"iss":"https://apis.roblox.com/oauth/","aud":"1"
     });
@@ -117,6 +117,6 @@ async fn generate_token() -> impl IntoResponse {
     token_response["access_token"] = Value::String(access_token.clone());
     token_response["id_token"] = id_token.into();
     let mut response = Json(token_response).into_response();
-    response.headers_mut().insert("set-cookie", HeaderValue::from_str(".ROBLOSECURITY=_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|offline; domain=localhost; expires=Tue, 16-Nov-2055 02:58:32 GMT; path=/; Secure; SameSite=Lax; HttpOnly").unwrap());
+    response.headers_mut().insert("set-cookie", HeaderValue::from_str(".ROBLOSECURITY=_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|offline; domain=localhost:8081; expires=Tue, 16-Nov-2055 02:58:32 GMT; path=/; Secure; SameSite=Lax; HttpOnly").unwrap());
     response
 }

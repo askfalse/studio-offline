@@ -1,10 +1,10 @@
 {
-    "data": [
-        {
-            "targetId": 28220420,
-            "state": "Completed",
-            "imageUrl": "http://localhost/renders/places/default.png",
-            "version": "TN2"
-        }
-    ]
+	"data": [
+		{
+			"targetId": 28220420,
+			"state": "Completed",
+			"imageUrl": "http://localhost:8081/renders/places/default.png",
+			"version": "TN2"
+		}
+	]
 }

@@ -24,7 +24,7 @@ pub extern "C" fn hook_test(
     fragment: usize,
 ) {
     unsafe {
-        let str_host = "localhost\0";
+        let str_host = "localhost:8081\0";
         let str_scheme = "http\0";
 
         *(host as *mut usize) = str_host.as_ptr() as usize;
@@ -44,7 +44,7 @@ pub extern "C" fn trustcheck_hook(str1: *const i8, a2: i8, a3: i8) -> *mut u64 {
         let url = CStr::from_ptr(str1).to_string_lossy();
         let replacement = "http://roblox.com\0";
 
-        if url.contains("http://localhost") && a3 == 0 {
+        if url.contains("http://localhost:8081") && a3 == 0 {
             if let Some(orig) = OG_TC {
                 return orig(replacement.as_ptr() as *const i8, a2, a3);
             }
